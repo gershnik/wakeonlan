@@ -1,0 +1,242 @@
+#! /usr/bin/env python3
+
+from __future__ import print_function
+import sys
+
+
+if sys.version_info < (3,7):
+    print('This program requires Python 3.7 or above')
+
+import socket
+import argparse
+import re
+import json
+import shutil
+from pathlib import Path
+
+DEFAULT_IP = '255.255.255.255'
+DEFAULT_PORT = 9
+CONFIG_PATH = Path.home() / '.wakeonlan'
+CONFIG_TMP_PATH = Path.home()/'.wakeonlan.tmp'
+MAC_PATTERN = re.compile(r'[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}')
+IP_PATTERN = re.compile(r'(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')
+     
+
+WAKE_CMD            = 1
+WAKE_BY_NAME_CMD    = 2
+SAVE_CMD            = 3
+DELETE_CMD          = 4
+LIST_CMD            = 5
+
+
+def splitMac(mac):
+    return [int(x, 16) for x in mac.split(':')]
+
+def joinMac(macItems):
+    return ':'.join([f'{x:02X}' for x in macItems])
+
+def parseArgs():
+
+    def mac_address_or_name(string):
+        if MAC_PATTERN.match(string):
+            return splitMac(string)
+        return string
+    
+    def ip_address(string):
+        if not IP_PATTERN.match(string):
+            raise argparse.ArgumentTypeError('invalid IPv4 address ' + string)
+        return string
+
+    def port(string):
+        try:
+            val = int(string)
+            if val < 0 or val >= 65535:
+                raise argparse.ArgumentTypeError('invalid port ' + string)
+            return val
+        except ValueError:
+            raise argparse.ArgumentTypeError('invalid port ' + string)
+
+    def exitWithMessage(parser, message):
+        print(message, file=sys.stderr)
+        parser.print_usage()
+        sys.exit(1)
+
+    parser = argparse.ArgumentParser(description='Sends Wake-On-Lan packet to a given machine')
+    parser.add_argument('macOrName', type=mac_address_or_name, nargs='?', metavar='MAC_OR_NAME',
+                        help='Saved name or MAC address of the machine. MAC address must be in XX:XX:XX:XX:XX:XX format')
+    parser.add_argument('-a', dest='ipaddr', type=ip_address, 
+                        help='Broadcast IPv4 address. This is NOT the IP address of the machine')
+    parser.add_argument('-p', dest='port', type=port, 
+                        help='Wake-On-Lan port')
+    manageGroudp = parser.add_mutually_exclusive_group()
+    manageGroudp.add_argument('--save', '-s', type=str, dest='saveName', metavar='NAME', help='Save wake arguments as NAME')
+    manageGroudp.add_argument('--delete', '-d', type=str, dest='deleteName', metavar='NAME', help='Delete saved NAME')
+    manageGroudp.add_argument('--list', '-l', action='store_true', dest='listNames', help='List saved names')
+    parser.set_defaults(cmd=0)
+
+    args = parser.parse_args()
+
+    if not args.saveName is None:
+        if not type(args.macOrName) is list:
+            exitWithMessage(parser, 'Must specify MAC address to save')
+        args.cmd = SAVE_CMD
+    elif not args.deleteName is None:
+        if not args.macOrName is None:
+            exitWithMessage(parser, 'parameter MAC_OR_NAME: not allowed with --delete/-d')
+        if not args.ipaddr is None:
+            exitWithMessage(parser, 'argument -a: not allowed with argument with --delete/-d')
+        if not args.port is None:
+            exitWithMessage(parser, 'argument -p: not allowed with argument with --delete/-d')
+        args.cmd = DELETE_CMD
+    elif args.listNames:
+        if not args.macOrName is None:
+            exitWithMessage(parser, 'parameter MAC_OR_NAME: not allowed with --list/-l')
+        if not args.ipaddr is None:
+            exitWithMessage(parser, 'argument -a: not allowed with argument with --list/-l')
+        if not args.port is None:
+            exitWithMessage(parser, 'argument -p: not allowed with argument with --list/-l')
+        args.cmd = LIST_CMD
+
+    if args.cmd == 0:
+        if args.macOrName is None:
+            exitWithMessage(parser, 'MAC or name is required')
+        if type(args.macOrName) is list:
+            args.cmd = WAKE_CMD
+        else:
+            if not args.ipaddr is None:
+                exitWithMessage(parser, 'Cannot specify broadcast address with name')
+            if not args.port is None:
+                exitWithMessage(parser, 'Cannot specify port with name')
+            args.cmd = WAKE_BY_NAME_CMD
+
+    if args.cmd == SAVE_CMD or args.cmd == WAKE_CMD:
+        args.ipaddr = DEFAULT_IP if args.ipaddr is None else args.ipaddr
+        args.port = DEFAULT_PORT if args.port is None else args.port
+
+    return args
+
+def wake(mac, addr):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
+    payload = bytearray(17 * 6)
+    for i in range(6):
+        payload[i] = 0xFF
+    for i in range(6, len(payload), 6):
+        payload[i:] = mac
+
+    sock.sendto(payload, addr)
+
+def loadConfig():
+    try:
+        with open(CONFIG_PATH, 'rt') as config:
+            config = json.load(config)
+            if type(config) != dict:
+                print(f'{CONFIG_PATH} is malformed', file=sys.stderr)
+                sys.exit(1)
+            return config
+    except json.JSONDecodeError:
+        print(f'{CONFIG_PATH} is malformed', file=sys.stderr)
+        sys.exit(1)
+    except OSError:
+        pass
+    return {'names':{}}
+
+def saveConfig(config):
+    try:
+        with open(CONFIG_TMP_PATH, 'wt') as tempfile:
+            json.dump(config, tempfile, indent=2)
+        shutil.move(CONFIG_TMP_PATH, CONFIG_PATH)
+    except OSError as err:
+        print(f'Unable to save: {err.strerror}', file=sys.stderr)
+        sys.exit(1)
+
+def getNamesDict(config):
+    names = config.get('names')
+    if type(names) != dict:
+        print(f'`names` not found in {CONFIG_PATH}', file=sys.stderr)
+        sys.exit(1)
+    return names
+
+def parseNameRecord(name, nameRecord):
+    if type(nameRecord) != dict:
+        print(f'`{name}` entry in {CONFIG_PATH} is malformed', file=sys.stderr)
+        sys.exit(1)
+    mac = nameRecord.get('mac')
+    if type(mac) != str or not MAC_PATTERN.match(mac):
+        print(f'mac address in `{name}` entry in {CONFIG_PATH} is missing or malformed', file=sys.stderr)
+        sys.exit(1)
+    mac = splitMac(mac)
+    ip = nameRecord.get('ip', DEFAULT_IP)
+    if type(ip) != str or not IP_PATTERN.match(ip):
+        print(f'ip address in `{name}` entry in {CONFIG_PATH} is malformed', file=sys.stderr)
+        sys.exit(1)
+    port = nameRecord.get('port', DEFAULT_PORT)
+    if type(port) != int or port < 0 or port > 65535:
+        print(f'port address in `{name}` entry in {CONFIG_PATH} is malformed', file=sys.stderr)
+        sys.exit(1)
+    
+    return [mac, (ip, port)]
+
+def getNameRecord(name):
+    config = loadConfig()
+    names = getNamesDict(config)
+    nameRecord = names.get(args.macOrName)
+    if nameRecord is None:
+        return None
+    return parseNameRecord(name, nameRecord)
+
+def getNames():
+    config = loadConfig()
+    names = getNamesDict(config)
+    ret = {}
+    for name, nameRecord in names.items():
+        ret[name] = parseNameRecord(name, nameRecord)
+    return ret
+
+
+def saveName(name, mac, ipaddr, port):
+    config = loadConfig()
+    names = getNamesDict(config)
+    record = {
+        'mac': joinMac(mac)
+    }
+    if ipaddr != DEFAULT_IP:
+        record['ip'] = ipaddr
+    if port != DEFAULT_PORT:
+        record['port'] = port
+    names[name] = record
+    saveConfig(config)
+
+def deleteName(name):
+    config = loadConfig()
+    names = getNamesDict(config)
+    names.pop(name, None)
+    saveConfig(config)
+
+args = parseArgs()
+
+if args.cmd == WAKE_CMD:
+    print(f'wake: {args.macOrName}, {args.ipaddr}, {args.port}')
+    wake(args.macOrName, (args.ipaddr, args.port))
+elif args.cmd == WAKE_BY_NAME_CMD:
+    nameRecord = getNameRecord(args.macOrName)
+    if nameRecord is None:
+        print(f'Name {args.macOrName} not found', file=sys.stderr)
+        sys.exit(1)
+    mac, addr = nameRecord
+    print(f'wake: {joinMac(mac)}, {addr[0]}, {addr[1]}')
+    wake(mac, addr)
+elif args.cmd == SAVE_CMD:
+    saveName(args.saveName, args.macOrName,args.ipaddr, args.port)
+    print(f'Name {args.saveName} saved')
+elif args.cmd == DELETE_CMD:
+    deleteName(args.deleteName)
+    print(f'Name {args.deleteName} deleted')
+elif args.cmd == LIST_CMD:
+    names = getNames()
+    for name, nameRecord in names.items():
+        mac, addr = nameRecord
+        mac = joinMac(mac)
+        print(f'{name} - {mac}, {addr[0]}, {addr[1]}')
+
