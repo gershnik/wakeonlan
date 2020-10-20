@@ -14,6 +14,21 @@ import json
 import shutil
 from pathlib import Path
 
+VERSION = '1.0'
+
+DESCRIPTION = 'Send Wake-On-Lan packet to a given machine'
+
+USAGE = r'''
+%(prog)s MAC [-a IPADDR] [-p PORT]
+%(prog)s NAME
+%(prog)s --save NAME MAC [-a IPADDR] [-p PORT]
+%(prog)s --delete NAME
+%(prog)s --list
+%(prog)s --version
+%(prog)s --help
+'''
+
+
 DEFAULT_IP = '255.255.255.255'
 DEFAULT_PORT = 9
 CONFIG_PATH = Path.home() / '.wakeonlan'
@@ -61,17 +76,26 @@ def parseArgs():
         parser.print_usage()
         sys.exit(1)
 
-    parser = argparse.ArgumentParser(description='Sends Wake-On-Lan packet to a given machine')
-    parser.add_argument('macOrName', type=mac_address_or_name, nargs='?', metavar='MAC_OR_NAME',
-                        help='Saved name or MAC address of the machine. MAC address must be in XX:XX:XX:XX:XX:XX format')
-    parser.add_argument('-a', dest='ipaddr', type=ip_address, 
-                        help='Broadcast IPv4 address. This is NOT the IP address of the machine')
-    parser.add_argument('-p', dest='port', type=port, 
-                        help='Wake-On-Lan port')
-    manageGroudp = parser.add_mutually_exclusive_group()
-    manageGroudp.add_argument('--save', '-s', type=str, dest='saveName', metavar='NAME', help='Save wake arguments as NAME')
-    manageGroudp.add_argument('--delete', '-d', type=str, dest='deleteName', metavar='NAME', help='Delete saved NAME')
-    manageGroudp.add_argument('--list', '-l', action='store_true', dest='listNames', help='List saved names')
+    parser = argparse.ArgumentParser(description=DESCRIPTION, usage=USAGE, add_help=False)
+    argsGroup = parser.add_argument_group('arguments')
+    argsGroup.add_argument('macOrName', type=mac_address_or_name, nargs='?', metavar='MAC or NAME',
+                            help='''MAC address or saved name of the machine to wake. 
+                            MAC address must be in XX:XX:XX:XX:XX:XX format''')
+    flagsGroup = parser.add_argument_group('switches')
+    flagsGroup.add_argument('-a', dest='ipaddr', type=ip_address, 
+                            help='Broadcast IPv4 address. This is NOT the IP address of the machine')
+    flagsGroup.add_argument('-p', dest='port', type=port, 
+                            help='Wake-On-Lan port')
+    manageGroud = flagsGroup.add_mutually_exclusive_group()
+    manageGroud.add_argument('--save', '-s', type=str, dest='saveName', metavar='NAME', 
+                             help='Save wake arguments as NAME')
+    manageGroud.add_argument('--delete', '-d', type=str, dest='deleteName', metavar='NAME', 
+                             help='Delete saved NAME')
+    manageGroud.add_argument('--list', '-l', action='store_true', dest='listNames', 
+                             help='List saved names')
+    flagsGroup.add_argument('--version', action='version', version=f'%(prog)s {VERSION}')
+    flagsGroup.add_argument('--help', '-h', action='help',
+                            help='show this help message and exit')
     parser.set_defaults(cmd=0)
 
     args = parser.parse_args()
