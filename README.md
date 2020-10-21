@@ -6,10 +6,11 @@ Yet another wake-on-lan command line script.
 
 I couldn't find one that worked and did what I need. Specifically I need:
 * A command line utility that works on Mac, Windows and Linux
-* That can used saved configurations rather than have me to remember the MAC address of the machines I need to wake.
+* Can use saved configurations rather than force me to remember the MAC addresses of the machines I need to wake.
+* Ideally, let me manipulate (create, delete, update, list) saved configurations using the same utility.
 * Ideally, be open source so I can see what it is doing and know it doesn't do anything nefarious
 
-None of the existing tools satisfied these criteria (even without the last) so I wrote my own.
+None of the existing tools I found satisfied these criteria (even without the last two) so I wrote my own.
 
 ### Pre-requisites
 
