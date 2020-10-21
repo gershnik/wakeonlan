@@ -1,4 +1,5 @@
 @echo off
+setlocal
 
 set MYDIR=%~dp0
 
@@ -23,9 +24,10 @@ goto :launch
 
 :launch
 
-%PY_LAUNCHER% %MYDIR%\wakeonlan %*
+%PY_LAUNCHER% %MYDIR%\wakeonlan %* 
+exit /B %ERRORLEVEL%
 
 :nopython
 
->2 echo No Python found in path
+>&2 echo No Python found in path
 exit /b 1
