@@ -47,7 +47,7 @@ wakeonlan Name
 wakeonlan --list
 ```
 
---list can be abbreviated as -l
+`--list` can be abbreviated as `-l`
 
 #### Delete a configuration
 
@@ -55,20 +55,26 @@ wakeonlan --list
 wakeonlan --delete Name
 ```
 
---delete can be abbreviated as -d
+`--delete` can be abbreviated as `-d`
 
 ### Installation
 
 On Unix systems:
 
 * Download `wakeonlan` script
-
 * Execute
     ```bash
     chmod a+x wakeonlan
     sudo cp wakeonlan /usr/local/bin
     ```
+Note: the shebang command in the script is `/usr/bin/env python3`. This needs to work on your machine to launch Python 3. This is usually the case for most Unix systems. If your machine has some non-standard configuration you will need to modify the shebang line.
 
 On Windows:
 
-...
+* Download `wakeonlan` script and `wakeonlan.cmd` launcher
+* Copy both to a desired directory. 
+* If the directory isn't in your PATH already, add it to PATH.
+
+Note:  `wakeonlan.cmd` launcher will attempt to use `py -3` to launch the script if possible and if not fall back on `python`. One of those ways needs to work on your machine to launch Python 3 for this to work. If your machine has some non-standard configuration you will need to modify `wakeonlan.cmd` launcher to deal with it.
+
+
