@@ -13,7 +13,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, Sequence, Tuple, Union
 
-VERSION = '1.0'
+VERSION = '1.1'
 
 PROG = 'wakeonlan'
 
