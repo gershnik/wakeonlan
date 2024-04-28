@@ -22,6 +22,16 @@ Python 3.7 or above. No additional packages required.
 pip3 install eg.wakeonlan
 ```
 
+On Windows if you get a warning like:
+```
+WARNING: The script wakeonlan.exe is installed in 
+'C:\Users\[username]\AppData\Roaming\Python\Python[VER]\Scripts' which is not on PATH.
+```
+
+You can either add this directory to your PATH or run `pip3 install` from Administrator command prompt.
+
+For bogus reasons Python does not add _per user_ scripts directory to PATH on Windows, only the system-wide one.
+
 ### Usage
 
 
