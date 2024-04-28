@@ -20,6 +20,9 @@ jobs:
         with open(os.environ['GITHUB_ENV'], 'w') as env:
           print('RELEASE_NAME=' + name, file=env)
 
+    - name: Checkout
+      uses: actions/checkout@v4
+
     - name: Setup Python environment
       run: |
         pip3 install -r requirements.txt
