@@ -1,0 +1,45 @@
+#! /usr/bin/env -S python3 -u
+
+import sys
+import re
+import subprocess
+import datetime
+
+from pathlib import Path
+from datetime import date
+
+MYPATH = Path(__file__).parent
+ROOT = MYPATH.parent
+
+NEW_VER = sys.argv[1]
+
+CHANGELOG_md = ROOT / "CHANGELOG.md"
+
+unreleased_link_pattern = re.compile(r"^\[Unreleased\]: (.*)$", re.DOTALL)
+lines = []
+with open(CHANGELOG_md, "rt") as change_log:
+    for line in change_log.readlines():
+        # Move Unreleased section to new version
+        if re.fullmatch(r"^## Unreleased.*$", line, re.DOTALL):
+            lines.append(line)
+            lines.append("\n")
+            lines.append(
+                f"## [{NEW_VER}] - {date.today().isoformat()}\n"
+            )
+        else:
+            lines.append(line)
+    lines.append(f'[{NEW_VER}]: https://github.com/gershnik/wakeonlan/releases/{NEW_VER}\n')
+
+with open(CHANGELOG_md, "wt") as change_log:
+    change_log.writelines(lines)
+
+wakeonlan_py = ROOT / "src/wakeonlan/wakeonlan.py"
+text = wakeonlan_py.read_text()
+text = re.sub(r"VERSION(\s*=\s*)'\d+(?:\.\d+)*'", rf"VERSION\g<1>'{NEW_VER}'", text)
+wakeonlan_py.write_text(text)
+
+subprocess.run(['git', 'add', 
+                CHANGELOG_md, 
+                wakeonlan_py], check=True)
+subprocess.run(['git', 'commit', '-m', f'chore: creating version {NEW_VER}'], check=True)
+subprocess.run(['git', 'tag', f'v{NEW_VER}'], check=True)

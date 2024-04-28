@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    
+    steps:
+    - name: Get release name
+      shell: python
+      run: |
+        import os
+        ref = os.environ['GITHUB_REF']
+        name = ref[ref.rfind('/') + 2:]
+        with open(os.environ['GITHUB_ENV'], 'w') as env:
+          print('RELEASE_NAME=' + name, file=env)
+
+    - name: Setup Python environment
+      run: |
+        pip3 install -r requirements.txt
+
+    - name: Build Source Distribution
+      run: |
+        python3 -m build
+
+    - name: Make release
+      uses: softprops/action-gh-release@v2
+      id: create_release
+      with:
+        draft: true
+        prerelease: false
+        name: ${{ env.RELEASE_NAME }}
+        body: ...edit me...
+        files: |
+          dist/*.tar.gz
+          dist/*.whl

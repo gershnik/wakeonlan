@@ -14,7 +14,13 @@ None of the existing tools I found satisfied these criteria (even without the la
 
 ### Pre-requisites
 
-Python 3.7 or above. No additonal packages required.
+Python 3.7 or above. No additional packages required.
+
+### Installation
+
+```bash
+pip3 install eg.wakeonlan
+```
 
 ### Usage
 
@@ -33,7 +39,7 @@ If not specified BroadcastAddress is 255.255.255.255 and Port is 9
 wakeonlan --save Name XX:XX:XX:XX:XX:XX [-a BroadcastAddress] [-p Port]
 ```
 
-Name can be anything. The configuration is saved into $HOME/.wakeonlan file in JSON format
+Name can be anything. The configuration is saved into `$HOME/.wakeonlan` file in JSON format
 --save can be abbreviated as -s
 
 #### Wake up a machine given saved configuration name
@@ -58,24 +64,11 @@ wakeonlan --delete Name
 
 `--delete` can be abbreviated as `-d`
 
-### Installation
+### Transferring configurations to another machine
 
-On Unix systems:
+Saved configurations are stored in `$HOME/.wakeonlan` file (`%USERPROFILE%\.wakeonlan` for Windows users).
+Copy this file to another machine into equivalent location to transfer all the configurations.
 
-* Download `wakeonlan` script
-* Execute
-    ```bash
-    chmod a+x wakeonlan
-    sudo cp wakeonlan /usr/local/bin
-    ```
-Note: the shebang command in the script is `/usr/bin/env python3`. This needs to work on your machine to launch Python 3. This is usually the case for most Unix systems. If your machine has some non-standard configuration you will need to modify the shebang line.
 
-On Windows:
-
-* Download `wakeonlan` script and `wakeonlan.cmd` launcher
-* Copy both to a desired directory. 
-* If the directory isn't in your PATH already, add it to PATH.
-
-Note:  `wakeonlan.cmd` launcher will attempt to use `py -3` to launch the script if possible and if not fall back on `python`. One of those ways needs to work on your machine to launch Python 3 for this to work. If your machine has some non-standard configuration you will need to modify `wakeonlan.cmd` launcher to deal with it.
 
 

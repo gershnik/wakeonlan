@@ -1,25 +1,21 @@
-#! /usr/bin/env python3
-
 # Copyright (c) 2018, Eugene Gershnik
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE.txt file or at
 # https://opensource.org/licenses/BSD-3-Clause
 
-from __future__ import print_function
 import sys
-
-
-if sys.version_info < (3,7):
-    print('This program requires Python 3.7 or above')
-
+import os
 import socket
 import argparse
 import re
 import json
 import shutil
 from pathlib import Path
+from typing import Any, Dict, Sequence, Tuple, Union
 
 VERSION = '1.0'
+
+PROG = 'wakeonlan'
 
 DESCRIPTION = 'Send Wake-On-Lan packet to a given machine'
 
@@ -36,8 +32,9 @@ USAGE = r'''
 
 DEFAULT_IP = '255.255.255.255'
 DEFAULT_PORT = 9
-CONFIG_PATH = Path.home() / '.wakeonlan'
-CONFIG_TMP_PATH = Path.home()/'.wakeonlan.tmp'
+CONFIG_HOME = Path(os.environ.get('WAKEONLAN_HOME', Path.home()))
+CONFIG_PATH = CONFIG_HOME / '.wakeonlan'
+CONFIG_TMP_PATH = CONFIG_HOME /'.wakeonlan.tmp'
 MAC_PATTERN = re.compile(r'[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}')
 IP_PATTERN = re.compile(r'(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')
      
@@ -48,6 +45,15 @@ SAVE_CMD            = 3
 DELETE_CMD          = 4
 LIST_CMD            = 5
 
+MacAddress = Sequence[int]
+IPAddress = str
+Port = int
+SocketAddress = Union[Tuple[Any, ...], str, Any] #see socket._Address
+HostRecord = Tuple[MacAddress, Tuple[IPAddress, Port]] 
+
+class WakeOnLanError(Exception):
+    def __init__(self, message):
+        super().__init__(message)
 
 def splitMac(mac):
     return [int(x, 16) for x in mac.split(':')]
@@ -81,7 +87,8 @@ def parseArgs():
         parser.print_usage()
         sys.exit(1)
 
-    parser = argparse.ArgumentParser(description=DESCRIPTION, usage=USAGE, add_help=False)
+    parser = argparse.ArgumentParser(description=DESCRIPTION, usage=USAGE, add_help=False,
+                                     prog=PROG)
     argsGroup = parser.add_argument_group('arguments')
     argsGroup.add_argument('macOrName', type=mac_address_or_name, nargs='?', metavar='MAC or NAME',
                             help='''MAC address or saved name of the machine to wake. 
@@ -144,7 +151,7 @@ def parseArgs():
 
     return args
 
-def wake(mac, addr):
+def wake(mac: MacAddress, addr: SocketAddress) -> None :
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
@@ -161,12 +168,10 @@ def loadConfig():
         with open(CONFIG_PATH, 'rt') as config:
             config = json.load(config)
             if type(config) != dict:
-                print(f'{CONFIG_PATH} is malformed', file=sys.stderr)
-                sys.exit(1)
+                raise WakeOnLanError(f'{CONFIG_PATH} is malformed')
             return config
     except json.JSONDecodeError:
-        print(f'{CONFIG_PATH} is malformed', file=sys.stderr)
-        sys.exit(1)
+        raise WakeOnLanError(f'{CONFIG_PATH} is malformed')
     except OSError:
         pass
     return {'names':{}}
@@ -177,45 +182,39 @@ def saveConfig(config):
             json.dump(config, tempfile, indent=2)
         shutil.move(CONFIG_TMP_PATH, CONFIG_PATH)
     except OSError as err:
-        print(f'Unable to save: {err.strerror}', file=sys.stderr)
-        sys.exit(1)
+        raise WakeOnLanError(f'Unable to save: {err.strerror}')
 
 def getNamesDict(config):
     names = config.get('names')
     if type(names) != dict:
-        print(f'`names` not found in {CONFIG_PATH}', file=sys.stderr)
-        sys.exit(1)
+        raise WakeOnLanError(f'`names` not found in {CONFIG_PATH}')
     return names
 
 def parseNameRecord(name, nameRecord):
     if type(nameRecord) != dict:
-        print(f'`{name}` entry in {CONFIG_PATH} is malformed', file=sys.stderr)
-        sys.exit(1)
+        raise WakeOnLanError(f'`{name}` entry in {CONFIG_PATH} is malformed')
     mac = nameRecord.get('mac')
     if type(mac) != str or not MAC_PATTERN.match(mac):
-        print(f'mac address in `{name}` entry in {CONFIG_PATH} is missing or malformed', file=sys.stderr)
-        sys.exit(1)
+        raise WakeOnLanError(f'mac address in `{name}` entry in {CONFIG_PATH} is missing or malformed')
     mac = splitMac(mac)
     ip = nameRecord.get('ip', DEFAULT_IP)
     if type(ip) != str or not IP_PATTERN.match(ip):
-        print(f'ip address in `{name}` entry in {CONFIG_PATH} is malformed', file=sys.stderr)
-        sys.exit(1)
+        raise WakeOnLanError(f'ip address in `{name}` entry in {CONFIG_PATH} is malformed')
     port = nameRecord.get('port', DEFAULT_PORT)
     if type(port) != int or port < 0 or port > 65535:
-        print(f'port address in `{name}` entry in {CONFIG_PATH} is malformed', file=sys.stderr)
-        sys.exit(1)
+        raise WakeOnLanError(f'port address in `{name}` entry in {CONFIG_PATH} is malformed')
     
-    return [mac, (ip, port)]
+    return (mac, (ip, port))
 
-def getNameRecord(name):
+def getNameRecord(name: str) -> Union[HostRecord, None]:
     config = loadConfig()
     names = getNamesDict(config)
-    nameRecord = names.get(args.macOrName)
+    nameRecord = names.get(name)
     if nameRecord is None:
         return None
     return parseNameRecord(name, nameRecord)
 
-def getNames():
+def getNames() -> Dict[str, HostRecord] :
     config = loadConfig()
     names = getNamesDict(config)
     ret = {}
@@ -224,10 +223,10 @@ def getNames():
     return ret
 
 
-def saveName(name, mac, ipaddr, port):
+def saveName(name: str, mac: MacAddress, ipaddr: IPAddress, port: Port) -> None :
     config = loadConfig()
     names = getNamesDict(config)
-    record = {
+    record: Dict[str, Any] = {
         'mac': joinMac(mac)
     }
     if ipaddr != DEFAULT_IP:
@@ -237,35 +236,40 @@ def saveName(name, mac, ipaddr, port):
     names[name] = record
     saveConfig(config)
 
-def deleteName(name):
+def deleteName(name: str) -> None :
     config = loadConfig()
     names = getNamesDict(config)
     names.pop(name, None)
     saveConfig(config)
 
-args = parseArgs()
+def main():
+    args = parseArgs()
 
-if args.cmd == WAKE_CMD:
-    print(f'wake: {args.macOrName}, {args.ipaddr}, {args.port}')
-    wake(args.macOrName, (args.ipaddr, args.port))
-elif args.cmd == WAKE_BY_NAME_CMD:
-    nameRecord = getNameRecord(args.macOrName)
-    if nameRecord is None:
-        print(f'Name {args.macOrName} not found', file=sys.stderr)
-        sys.exit(1)
-    mac, addr = nameRecord
-    print(f'wake: {joinMac(mac)}, {addr[0]}, {addr[1]}')
-    wake(mac, addr)
-elif args.cmd == SAVE_CMD:
-    saveName(args.saveName, args.macOrName,args.ipaddr, args.port)
-    print(f'Name {args.saveName} saved')
-elif args.cmd == DELETE_CMD:
-    deleteName(args.deleteName)
-    print(f'Name {args.deleteName} deleted')
-elif args.cmd == LIST_CMD:
-    names = getNames()
-    for name, nameRecord in names.items():
-        mac, addr = nameRecord
-        mac = joinMac(mac)
-        print(f'{name} - {mac}, {addr[0]}, {addr[1]}')
+    try:
 
+        if args.cmd == WAKE_CMD:
+            print(f'wake: {args.macOrName}, {args.ipaddr}, {args.port}')
+            wake(args.macOrName, (args.ipaddr, args.port))
+        elif args.cmd == WAKE_BY_NAME_CMD:
+            nameRecord = getNameRecord(args.macOrName)
+            if nameRecord is None:
+                raise WakeOnLanError(f'Name {args.macOrName} not found')
+            mac, addr = nameRecord
+            print(f'wake: {joinMac(mac)}, {addr[0]}, {addr[1]}')
+            wake(mac, addr)
+        elif args.cmd == SAVE_CMD:
+            saveName(args.saveName, args.macOrName, args.ipaddr, args.port)
+            print(f'Name {args.saveName} saved')
+        elif args.cmd == DELETE_CMD:
+            deleteName(args.deleteName)
+            print(f'Name {args.deleteName} deleted')
+        elif args.cmd == LIST_CMD:
+            names = getNames()
+            for name, nameRecord in names.items():
+                mac, addr = nameRecord
+                mac = joinMac(mac)
+                print(f'{name} - {mac}, {addr[0]}, {addr[1]}')
+        return 0
+    except WakeOnLanError as ex:
+        print(ex, file=sys.stderr)
+        return 1

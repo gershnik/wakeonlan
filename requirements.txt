@@ -1,0 +1,4 @@
+# These are needed for devlopment and testing of the package, not at runtime
+build
+pytest
+twine

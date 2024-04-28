@@ -1,1 +1,10 @@
 .vscode/
+.venv/
+.nox/
+.pytest_cache/
+dist/
+build/
+__pycache__
+*.egg-info
+.extrapythons
+.pypirc
