@@ -30,7 +30,7 @@ WARNING: The script wakeonlan.exe is installed in
 
 You can either add this directory to your PATH or run `pip3 install` from Administrator command prompt.
 
-For bogus reasons Python does not add _per user_ scripts directory to PATH on Windows, only the system-wide one.
+For no good reason Python does not add _per user_ scripts directory to PATH on Windows, only the system-wide one. See [this Python bug](https://bugs.python.org/issue39658)
 
 ### Usage
 
