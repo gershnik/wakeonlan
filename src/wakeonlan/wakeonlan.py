@@ -11,7 +11,7 @@ import re
 import json
 import shutil
 from pathlib import Path
-from typing import Any, Dict, Sequence, Tuple, Union
+from typing import Any, Sequence, Tuple, Union, Optional
 
 VERSION = '1.1'
 
@@ -25,6 +25,8 @@ USAGE = r'''
 %(prog)s --save NAME MAC [-a IPADDR] [-p PORT]
 %(prog)s --delete NAME
 %(prog)s --list
+%(prog)s --names
+%(prog)s --autocomplete-source
 %(prog)s --version
 %(prog)s --help
 '''
@@ -44,6 +46,8 @@ WAKE_BY_NAME_CMD    = 2
 SAVE_CMD            = 3
 DELETE_CMD          = 4
 LIST_CMD            = 5
+NAMES_CMD           = 6
+AUTOC_SOURCE        = 7
 
 MacAddress = Sequence[int]
 IPAddress = str
@@ -52,28 +56,28 @@ SocketAddress = Union[Tuple[Any, ...], str, Any] #see socket._Address
 HostRecord = Tuple[MacAddress, Tuple[IPAddress, Port]] 
 
 class WakeOnLanError(Exception):
-    def __init__(self, message):
+    def __init__(self, message: str):
         super().__init__(message)
 
-def splitMac(mac):
+def splitMac(mac: str):
     return [int(x, 16) for x in mac.split(':')]
 
-def joinMac(macItems):
+def joinMac(macItems: MacAddress):
     return ':'.join([f'{x:02X}' for x in macItems])
 
 def parseArgs():
 
-    def mac_address_or_name(string):
+    def mac_address_or_name(string: str):
         if MAC_PATTERN.match(string):
             return splitMac(string)
         return string
     
-    def ip_address(string):
+    def ip_address(string: str):
         if not IP_PATTERN.match(string):
             raise argparse.ArgumentTypeError('invalid IPv4 address ' + string)
         return string
 
-    def port(string):
+    def port(string: str):
         try:
             val = int(string)
             if val < 0 or val >= 65535:
@@ -82,7 +86,7 @@ def parseArgs():
         except ValueError:
             raise argparse.ArgumentTypeError('invalid port ' + string)
 
-    def exitWithMessage(parser, message):
+    def exitWithMessage(parser: argparse.ArgumentParser, message: str):
         print(message, file=sys.stderr)
         parser.print_usage()
         sys.exit(1)
@@ -103,8 +107,12 @@ def parseArgs():
                              help='Save wake arguments as NAME')
     manageGroud.add_argument('--delete', '-d', type=str, dest='deleteName', metavar='NAME', 
                              help='Delete saved NAME')
-    manageGroud.add_argument('--list', '-l', action='store_true', dest='listNames', 
+    manageGroud.add_argument('--list', '-l', action='store_true', dest='listDefinitions', 
+                             help='List saved definitions')
+    manageGroud.add_argument('--names', '-n', action='store_true', dest='listNames', 
                              help='List saved names')
+    manageGroud.add_argument('--autocomplete-source', action='store_true', dest='autocompleteSource', 
+                             help='Print out path to a script suitable for sourcing into a shell to set up auto-complete')
     flagsGroup.add_argument('--version', action='version', version=f'%(prog)s {VERSION}')
     flagsGroup.add_argument('--help', '-h', action='help',
                             help='show this help message and exit')
@@ -124,7 +132,7 @@ def parseArgs():
         if not args.port is None:
             exitWithMessage(parser, 'argument -p: not allowed with argument with --delete/-d')
         args.cmd = DELETE_CMD
-    elif args.listNames:
+    elif args.listDefinitions:
         if not args.macOrName is None:
             exitWithMessage(parser, 'parameter MAC_OR_NAME: not allowed with --list/-l')
         if not args.ipaddr is None:
@@ -132,11 +140,28 @@ def parseArgs():
         if not args.port is None:
             exitWithMessage(parser, 'argument -p: not allowed with argument with --list/-l')
         args.cmd = LIST_CMD
+    elif args.listNames:
+        if not args.macOrName is None:
+            exitWithMessage(parser, 'parameter MAC_OR_NAME: not allowed with --names/-n')
+        if not args.ipaddr is None:
+            exitWithMessage(parser, 'argument -a: not allowed with argument with --names/-n')
+        if not args.port is None:
+            exitWithMessage(parser, 'argument -p: not allowed with argument with --names/-n')
+        args.cmd = NAMES_CMD
+    elif args.autocompleteSource:
+        if not args.macOrName is None:
+            exitWithMessage(parser, 'parameter MAC_OR_NAME: not allowed with --autocomplete-source')
+        if not args.ipaddr is None:
+            exitWithMessage(parser, 'argument -a: not allowed with argument with --autocomplete-source')
+        if not args.port is None:
+            exitWithMessage(parser, 'argument -p: not allowed with argument with --autocomplete-source')
+        args.cmd = AUTOC_SOURCE
+
 
     if args.cmd == 0:
-        if args.macOrName is None:
+        if args.macOrName is None: # type: ignore
             exitWithMessage(parser, 'MAC or name is required')
-        if type(args.macOrName) is list:
+        if type(args.macOrName) is list: # type: ignore
             args.cmd = WAKE_CMD
         else:
             if not args.ipaddr is None:
@@ -163,20 +188,20 @@ def wake(mac: MacAddress, addr: SocketAddress) -> None :
 
     sock.sendto(payload, addr)
 
-def loadConfig():
+def loadConfig() -> dict[Any, Any]:
     try:
         with open(CONFIG_PATH, 'rt') as config:
             config = json.load(config)
             if type(config) != dict:
                 raise WakeOnLanError(f'{CONFIG_PATH} is malformed')
-            return config
+            return config # type: ignore
     except json.JSONDecodeError:
         raise WakeOnLanError(f'{CONFIG_PATH} is malformed')
     except OSError:
         pass
     return {'names':{}}
 
-def saveConfig(config):
+def saveConfig(config: dict[Any, Any]):
     try:
         with open(CONFIG_TMP_PATH, 'wt') as tempfile:
             json.dump(config, tempfile, indent=2)
@@ -184,13 +209,13 @@ def saveConfig(config):
     except OSError as err:
         raise WakeOnLanError(f'Unable to save: {err.strerror}')
 
-def getNamesDict(config):
+def getNamesDict(config: dict[Any, Any]) -> dict[Any, Any]:
     names = config.get('names')
     if type(names) != dict:
         raise WakeOnLanError(f'`names` not found in {CONFIG_PATH}')
-    return names
+    return names # type: ignore
 
-def parseNameRecord(name, nameRecord):
+def parseNameRecord(name: str, nameRecord: dict[Any, Any]) -> HostRecord:
     if type(nameRecord) != dict:
         raise WakeOnLanError(f'`{name}` entry in {CONFIG_PATH} is malformed')
     mac = nameRecord.get('mac')
@@ -206,7 +231,7 @@ def parseNameRecord(name, nameRecord):
     
     return (mac, (ip, port))
 
-def getNameRecord(name: str) -> Union[HostRecord, None]:
+def getNameRecord(name: str) -> Optional[HostRecord]:
     config = loadConfig()
     names = getNamesDict(config)
     nameRecord = names.get(name)
@@ -214,10 +239,10 @@ def getNameRecord(name: str) -> Union[HostRecord, None]:
         return None
     return parseNameRecord(name, nameRecord)
 
-def getNames() -> Dict[str, HostRecord] :
+def getNames() -> dict[str, HostRecord] :
     config = loadConfig()
     names = getNamesDict(config)
-    ret = {}
+    ret: dict[str, HostRecord] = {}
     for name, nameRecord in names.items():
         ret[name] = parseNameRecord(name, nameRecord)
     return ret
@@ -226,7 +251,7 @@ def getNames() -> Dict[str, HostRecord] :
 def saveName(name: str, mac: MacAddress, ipaddr: IPAddress, port: Port) -> None :
     config = loadConfig()
     names = getNamesDict(config)
-    record: Dict[str, Any] = {
+    record: dict[str, Any] = {
         'mac': joinMac(mac)
     }
     if ipaddr != DEFAULT_IP:
@@ -242,7 +267,7 @@ def deleteName(name: str) -> None :
     names.pop(name, None)
     saveConfig(config)
 
-def main():
+def main() -> int:
     args = parseArgs()
 
     try:
@@ -269,6 +294,12 @@ def main():
                 mac, addr = nameRecord
                 mac = joinMac(mac)
                 print(f'{name} - {mac}, {addr[0]}, {addr[1]}')
+        elif args.cmd == NAMES_CMD:
+            names = getNames()
+            for name in names.keys():
+                print(name)
+        elif args.cmd == AUTOC_SOURCE:
+            print(str(Path(__file__).parent / 'autocomplete.sh'))
         return 0
     except WakeOnLanError as ex:
         print(ex, file=sys.stderr)
