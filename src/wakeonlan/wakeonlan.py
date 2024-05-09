@@ -11,7 +11,7 @@ import re
 import json
 import shutil
 from pathlib import Path
-from typing import Any, Sequence, Tuple, Union, Optional
+from typing import Any, Dict, Sequence, Tuple, Union, Optional
 
 VERSION = '1.1'
 
@@ -188,7 +188,7 @@ def wake(mac: MacAddress, addr: SocketAddress) -> None :
 
     sock.sendto(payload, addr)
 
-def loadConfig() -> dict[Any, Any]:
+def loadConfig() -> Dict[Any, Any]:
     try:
         with open(CONFIG_PATH, 'rt') as config:
             config = json.load(config)
@@ -201,7 +201,7 @@ def loadConfig() -> dict[Any, Any]:
         pass
     return {'names':{}}
 
-def saveConfig(config: dict[Any, Any]):
+def saveConfig(config: Dict[Any, Any]):
     try:
         with open(CONFIG_TMP_PATH, 'wt') as tempfile:
             json.dump(config, tempfile, indent=2)
@@ -209,13 +209,13 @@ def saveConfig(config: dict[Any, Any]):
     except OSError as err:
         raise WakeOnLanError(f'Unable to save: {err.strerror}')
 
-def getNamesDict(config: dict[Any, Any]) -> dict[Any, Any]:
+def getNamesDict(config: Dict[Any, Any]) -> Dict[Any, Any]:
     names = config.get('names')
     if type(names) != dict:
         raise WakeOnLanError(f'`names` not found in {CONFIG_PATH}')
     return names # type: ignore
 
-def parseNameRecord(name: str, nameRecord: dict[Any, Any]) -> HostRecord:
+def parseNameRecord(name: str, nameRecord: Dict[Any, Any]) -> HostRecord:
     if type(nameRecord) != dict:
         raise WakeOnLanError(f'`{name}` entry in {CONFIG_PATH} is malformed')
     mac = nameRecord.get('mac')
@@ -239,10 +239,10 @@ def getNameRecord(name: str) -> Optional[HostRecord]:
         return None
     return parseNameRecord(name, nameRecord)
 
-def getNames() -> dict[str, HostRecord] :
+def getNames() -> Dict[str, HostRecord] :
     config = loadConfig()
     names = getNamesDict(config)
-    ret: dict[str, HostRecord] = {}
+    ret: Dict[str, HostRecord] = {}
     for name, nameRecord in names.items():
         ret[name] = parseNameRecord(name, nameRecord)
     return ret
@@ -251,7 +251,7 @@ def getNames() -> dict[str, HostRecord] :
 def saveName(name: str, mac: MacAddress, ipaddr: IPAddress, port: Port) -> None :
     config = loadConfig()
     names = getNamesDict(config)
-    record: dict[str, Any] = {
+    record: Dict[str, Any] = {
         'mac': joinMac(mac)
     }
     if ipaddr != DEFAULT_IP:
