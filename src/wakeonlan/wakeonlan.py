@@ -299,7 +299,13 @@ def main() -> int:
             for name in names.keys():
                 print(name)
         elif args.cmd == AUTOC_SOURCE:
-            print(str(Path(__file__).parent / 'autocomplete.sh'))
+            if not os.environ.get('PSMODULEPATH') is None:
+                print(str(Path(__file__).parent / 'autocomplete.ps1'))
+            elif (not os.environ.get('BASH_VERSION') is None) or (not os.environ.get('ZSH_VERSION') is None):
+                print(str(Path(__file__).parent / 'autocomplete.sh'))
+            else:
+                print("Autocomplete is not supported for this shell", file=sys.stderr)
+                return 1
         return 0
     except WakeOnLanError as ex:
         print(ex, file=sys.stderr)

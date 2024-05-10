@@ -1,5 +1,6 @@
 include CHANGELOG.md
 include src/wakeonlan/autocomplete.sh
+include src/wakeonlan/autocomplete.ps1
 exclude tests/**
 
 
