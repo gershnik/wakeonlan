@@ -40,11 +40,7 @@ None of the existing tools I found satisfied these criteria (even without the la
 
 ## Setup
 
-### Pre-requisites
-
-Python 3.7 or above. No additional packages required.
-
-### Installation
+**Pre-requisites**: Python 3.7 or above. No additional packages required.
 
 ```bash
 pip3 install eg.wakeonlan
