@@ -11,8 +11,6 @@ Yet another wake-on-lan command line script.
 
 - [Why another one?](#why-another-one)
 - [Setup](#setup)
-    - [Pre-requisites](#pre-requisites)
-    - [Installation](#installation)
 - [Usage](#usage)
     - [Wake up a machine given its MAC address XX:XX:XX:XX:XX:XX](#wake-up-a-machine-given-its-mac-address-xxxxxxxxxxxx)
     - [Save wake up configuration to be used later](#save-wake-up-configuration-to-be-used-later)
