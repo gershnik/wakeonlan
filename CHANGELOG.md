@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [1.2] - 2024-05-09
+
 ### Added
 - Support for shell autocomplete for `bash`, `zsh` and `powershell`. 
 
@@ -21,3 +23,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 [1.0]: https://github.com/gershnik/wakeonlan/releases/1.0
 [1.1]: https://github.com/gershnik/wakeonlan/releases/1.1
+[1.2]: https://github.com/gershnik/wakeonlan/releases/1.2
