@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-BSD-brightgreen.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![pypi](https://img.shields.io/pypi/v/eg.wakeonlan)](https://pypi.org/project/eg.wakeonlan)
-[![Language](https://img.shields.io/badge/language-Python-blue.svg)](https://isocpp.org/)
+[![Language](https://img.shields.io/badge/language-Python-blue.svg)](https://www.python.org)
 [![python](https://img.shields.io/badge/python->=3.7-blue.svg)](https://www.python.org)
 
 Yet another wake-on-lan command line script.
