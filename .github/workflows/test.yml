@@ -9,9 +9,8 @@ on:
       - 'README.md'
       - '.gitignore'
       - 'LICENSE.txt'
-      - 'README.md'
       - 'CHANGELOG.md'
-      - '.github/workflows/publish.yml'
+      - '.github/workflows/release.yml'
 
 jobs:
   matrix:
