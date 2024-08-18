@@ -1,0 +1,17 @@
+[MESSAGES CONTROL]
+
+disable=protected-access, 
+        wrong-import-order, 
+        trailing-whitespace, 
+        trailing-newlines, 
+        line-too-long, 
+        multiple-statements,
+        consider-using-enumerate,
+        too-few-public-methods,
+        too-many-locals,
+        too-many-branches,
+        too-many-return-statements,
+        too-many-instance-attributes,
+        too-many-arguments,
+        too-many-statements,
+        R0801  #Similar lines in 2 files
