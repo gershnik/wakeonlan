@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [1.3] - 2024-08-17
+
 ### Changed
 - Module's public interface is now finalized
 - Code cleaned to conform to various PEPs and make PyLint happy
@@ -28,3 +30,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [1.0]: https://github.com/gershnik/wakeonlan/releases/1.0
 [1.1]: https://github.com/gershnik/wakeonlan/releases/1.1
 [1.2]: https://github.com/gershnik/wakeonlan/releases/1.2
+[1.3]: https://github.com/gershnik/wakeonlan/releases/1.3
