@@ -14,7 +14,7 @@ if (mydir/".extrapythons").exists():
             if len(line) != 0 and not re.match(r'\s*#.*', line):
                 extraPythons.append(line.strip())
 
-@nox.session(python=["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.13t"] + extraPythons)
+@nox.session(python=["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.13t"] + extraPythons)
 def test(session):
     session.install("pytest")
     #session.install("--no-build-isolation", "--editable", ".")
