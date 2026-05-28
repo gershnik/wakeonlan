@@ -282,7 +282,7 @@ def main() -> int:
     try:
 
         if args.cmd == WAKE_CMD:
-            print(f'wake: {args.mac_or_name}, {args.ipaddr}, {args.port}')
+            print(f'wake: {_join_mac(args.mac_or_name)}, {args.ipaddr}, {args.port}')
             wake(args.mac_or_name, (args.ipaddr, args.port))
         elif args.cmd == WAKE_BY_NAME_CMD:
             name_record = get_name_record(args.mac_or_name)
