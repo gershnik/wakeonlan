@@ -83,7 +83,7 @@ def _parse_args():
     def port(string: str):
         try:
             val = int(string)
-            if val < 0 or val >= 65535:
+            if val < 0 or val > 65535:
                 raise argparse.ArgumentTypeError('invalid port ' + string)
             return val
         except ValueError as ex:
