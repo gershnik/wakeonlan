@@ -71,12 +71,12 @@ def _join_mac(mac_items: MacAddress):
 def _parse_args():
 
     def mac_address_or_name(string: str):
-        if MAC_PATTERN.match(string):
+        if MAC_PATTERN.fullmatch(string):
             return _split_mac(string)
         return string
     
     def ip_address(string: str):
-        if not IP_PATTERN.match(string):
+        if not IP_PATTERN.fullmatch(string):
             raise argparse.ArgumentTypeError('invalid IPv4 address ' + string)
         return string
 
@@ -223,11 +223,11 @@ def _parse_name_record(name: str, name_record: Dict[Any, Any]) -> HostRecord:
     if not isinstance(name_record, dict): # type: ignore
         raise WakeOnLanError(f'`{name}` entry in {CONFIG_PATH} is malformed')
     mac = name_record.get('mac')
-    if not isinstance(mac, str) or not MAC_PATTERN.match(mac):
+    if not isinstance(mac, str) or not MAC_PATTERN.fullmatch(mac):
         raise WakeOnLanError(f'mac address in `{name}` entry in {CONFIG_PATH} is missing or malformed')
     mac = _split_mac(mac)
     ip = name_record.get('ip', DEFAULT_IP)
-    if not isinstance(ip, str) or not IP_PATTERN.match(ip):
+    if not isinstance(ip, str) or not IP_PATTERN.fullmatch(ip):
         raise WakeOnLanError(f'ip address in `{name}` entry in {CONFIG_PATH} is malformed')
     port = name_record.get('port', DEFAULT_PORT)
     if not isinstance(port, int) or port < 0 or port > 65535:
