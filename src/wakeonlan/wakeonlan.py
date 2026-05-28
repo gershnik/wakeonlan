@@ -188,7 +188,7 @@ def wake(mac: MacAddress, addr: SocketAddress) -> None :
     for i in range(6):
         payload[i] = 0xFF
     for i in range(6, len(payload), 6):
-        payload[i:] = mac
+        payload[i:i+6] = mac
 
     sock.sendto(payload, addr)
 
