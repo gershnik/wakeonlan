@@ -125,6 +125,9 @@ def _enum_unix() -> Dict[str, List[InterfaceAddress]]:
     if sys.platform.startswith('sunos'):
         # getifaddrs lives in libsocket on illumos/Solaris, not libc
         lib_name = ctypes.util.find_library('socket') or 'libsocket.so.1'
+    elif sys.platform.startswith('haiku'):
+        # getifaddrs lives in libnetwork on Haiku
+        lib_name = ctypes.util.find_library('network') or 'libnetwork.so'
     else:
         lib_name = ctypes.util.find_library('c')
     libc = ctypes.CDLL(lib_name, use_errno=True)
