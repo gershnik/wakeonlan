@@ -10,7 +10,6 @@ import os
 import socket
 import re
 import json
-import shutil
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, Sequence, Tuple, Union, Optional, NamedTuple
