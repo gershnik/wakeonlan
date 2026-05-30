@@ -1,4 +1,3 @@
-
 if [ -n "$BASH_VERSION" ]; then
     function _wakeonlan() {
         local command=$1
@@ -6,6 +5,14 @@ if [ -n "$BASH_VERSION" ]; then
         local prevWord=$3
 
         COMPREPLY=()
+
+        # Complete interface names after -i
+        if [[ "$prevWord" == "-i" ]]; then
+            COMPREPLY=( $(compgen -W "$(wakeonlan --interfaces)" -- "$curWord") )
+            return 0
+        fi
+
+        # Complete saved names after the command itself or after -d/--delete
         if [[ "$prevWord" != "$command" && "$prevWord" != "-d" && "$prevWord" != "--delete" ]]; then
             return 0
         fi
@@ -27,14 +34,14 @@ if [ -n "$BASH_VERSION" ]; then
 
     complete -F "_wakeonlan" "wakeonlan"
 
-elif [ -n "$ZSH_VERSION" ]; then 
+elif [ -n "$ZSH_VERSION" ]; then
     function _wakeonlan() {
         local -a args
         local context state state_descr line
         typeset -A opt_args
 
         local exargs="-h --help -v --version"
-        local edargs="-s --save -d --delete -l --list -n --names" 
+        local edargs="-s --save -d --delete -l --list -n --names"
 
         args=(
             "(1 $edargs $exargs)"{-s,--save=}'[save new name]:name:( ):mac:( )'
@@ -43,7 +50,7 @@ elif [ -n "$ZSH_VERSION" ]; then
             "(1 $edargs $exargs)"{-n,--names=}'[list saved names]'
             '(1 -)'{-h,--help}'[display help information]'
             '(1 -)'{-v,--version}'[print program version]'
-            "(-d --delete -l --list -n --names $exargs)"-a'[ip address]:addr:= (255.255.255.255)'
+            "(-d --delete -l --list -n --names $exargs)"-i'[interface name]:iface:->interfaces'
             "(-d --delete -l --list -n --names $exargs)"-p'[port]:port:= (9)'
             "($edargs $exargs)"':name:->names'
         )
@@ -55,6 +62,12 @@ elif [ -n "$ZSH_VERSION" ]; then
                     compadd $line
                 }
             ;;
+            interfaces)
+                for line in "${(@f)"$(wakeonlan --interfaces)"}"
+                {
+                    compadd $line
+                }
+            ;;
         esac
         return 0
     }
@@ -62,8 +75,5 @@ elif [ -n "$ZSH_VERSION" ]; then
 
     compdef _wakeonlan wakeonlan
 else
-    echo You shell is not supported for wakeonlan autocomplete
+    echo Your shell is not supported for wakeonlan autocomplete
 fi
-
-
-

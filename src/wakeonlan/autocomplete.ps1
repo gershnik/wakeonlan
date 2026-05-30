@@ -1,39 +1,38 @@
-
-
-
 $scriptblock = {
     param($wordToComplete, $commandAst, $cursorPosition)
-        
-    $words = @()
-    $commandAst.FindAll({ $args[0].Parent -eq $commandAst }, $false) | ForEach-Object {
-        $words += $_
-    }
-    
+
+    # Direct children of the command (the command name plus its arguments).
+    $words = $commandAst.CommandElements
+
+    # Index of the last word whose extent ends before the cursor -- the
+    # "previous" word relative to the one being completed.
     $prevIdx = -1
-    for ($i = 0; $i -le ($words.length - 1); $i += 1) {
-        $word=$words[$i]
-        if ($word.Extent.EndOffset -lt $cursorPosition) {
+    for ($i = 0; $i -le ($words.Count - 1); $i += 1) {
+        if ($words[$i].Extent.EndOffset -lt $cursorPosition) {
             $prevIdx = $i
         }
     }
-    
-    $found = $false
-    if (($prevIdx -eq 0) -or ("$($words[$prevIdx])" -eq "-d") -or ("$($words[$prevIdx])" -eq "--delete")) {
-        [string[]]$names = $(wakeonlan -n)
-        foreach ($name in $names) {
-            if ($name.StartsWith($wordToComplete)) {
-                if ($null -ne ($(' ', '"') | Where-Object { $name -match $_ })) {
-                    "'$name'"
-                } else {
-                    "$name"
-                }
-                $found = $true
-            }
+    $prev = if ($prevIdx -ge 0) { $words[$prevIdx].Extent.Text } else { '' }
+
+    # Quote with single quotes if the value contains whitespace or a double
+    # quote; double any embedded single quotes per PowerShell's rules.
+    function emit($value) {
+        if ($value -match '[\s"]') {
+            "'$($value -replace ""'"", ""''"")'"
+        } else {
+            $value
         }
-        
-    } 
-    if (-not $found) {
-        ""
+    }
+
+    if (($prevIdx -eq 0) -or ($prev -eq '-d') -or ($prev -eq '--delete')) {
+        foreach ($name in @(wakeonlan -n)) {
+            if ($name.StartsWith($wordToComplete)) { emit $name }
+        }
+    }
+    elseif ($prev -eq '-i') {
+        foreach ($iface in @(wakeonlan --interfaces)) {
+            if ($iface.StartsWith($wordToComplete)) { emit $iface }
+        }
     }
 }
 
