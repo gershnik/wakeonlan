@@ -1,7 +1,7 @@
 [MESSAGES CONTROL]
 
 disable=protected-access, 
-        wrong-import-order, 
+        invalid-name, 
         trailing-whitespace, 
         trailing-newlines, 
         line-too-long, 
