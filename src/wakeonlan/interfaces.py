@@ -100,6 +100,12 @@ else:
                     ("sin6_scope_id", ctypes.c_uint32)]
 
 
+# Solaris/illumos has uint64_t ifa_flags; everywhere else it's unsigned int.
+if sys.platform.startswith('sunos'):
+    _ifa_flags_t = ctypes.c_uint64
+else:
+    _ifa_flags_t = ctypes.c_uint
+
 class _ifaddrs(ctypes.Structure):
     pass
 
@@ -107,7 +113,7 @@ class _ifaddrs(ctypes.Structure):
 _ifaddrs._fields_ = [
     ("ifa_next",      ctypes.POINTER(_ifaddrs)),
     ("ifa_name",      ctypes.c_char_p),
-    ("ifa_flags",     ctypes.c_uint),
+    ("ifa_flags",     _ifa_flags_t),
     ("ifa_addr",      ctypes.POINTER(_sockaddr)),
     ("ifa_netmask",   ctypes.POINTER(_sockaddr)),
     ("ifa_broadaddr", ctypes.POINTER(_sockaddr)),
@@ -116,7 +122,12 @@ _ifaddrs._fields_ = [
 
 
 def _enum_unix() -> Dict[str, List[InterfaceAddress]]:
-    libc = ctypes.CDLL(ctypes.util.find_library('c'), use_errno=True)
+    if sys.platform.startswith('sunos'):
+        # getifaddrs lives in libsocket on illumos/Solaris, not libc
+        lib_name = ctypes.util.find_library('socket') or 'libsocket.so.1'
+    else:
+        lib_name = ctypes.util.find_library('c')
+    libc = ctypes.CDLL(lib_name, use_errno=True)
     libc.getifaddrs.restype = ctypes.c_int
     libc.getifaddrs.argtypes = [ctypes.POINTER(ctypes.POINTER(_ifaddrs))]
     libc.freeifaddrs.argtypes = [ctypes.POINTER(_ifaddrs)]
