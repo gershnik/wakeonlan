@@ -1,9 +1,8 @@
 # wakeonlan #
 
-[![License](https://img.shields.io/badge/license-BSD-brightgreen.svg)](https://opensource.org/licenses/BSD-3-Clause)
-[![pypi](https://img.shields.io/pypi/v/eg.wakeonlan)](https://pypi.org/project/eg.wakeonlan)
-[![Language](https://img.shields.io/badge/language-Python-blue.svg)](https://www.python.org)
-[![python](https://img.shields.io/badge/python->=3.7-blue.svg)](https://www.python.org/downloads/release/python-370/)
+[![License][badge-license]][license]
+[![pypi][badge-pypi]][wakeonlan-pypi]
+[![Language][badge-lang]][python]
 
 Yet another wake-on-lan command line script.
 
@@ -17,11 +16,13 @@ Yet another wake-on-lan command line script.
     - [Wake up a machine given saved configuration name](#wake-up-a-machine-given-saved-configuration-name)
     - [List existing configuration names](#list-existing-configuration-names)
     - [Delete a configuration](#delete-a-configuration)
+    - [List available interfaces](#list-available-interfaces)
     - [Transferring configurations to another machine](#transferring-configurations-to-another-machine)
 - [Set up shell autocomplete](#set-up-shell-autocomplete)
     - [Bash](#bash)
     - [Zsh](#zsh)
     - [Powershell](#powershell)
+- [Backward compatibility](#backward-compatibility)
 
 <!-- /TOC -->
 
@@ -29,7 +30,8 @@ Yet another wake-on-lan command line script.
 ## Why another one?
 
 I couldn't find one that worked and did what I need. Specifically I need:
-* A command line utility that works on Mac, Windows and Linux
+* A command line utility that works on Mac, Windows and Linux.
+* Works over both IPv4 and IPv6, including on IPv6-only networks.
 * Can use saved configurations rather than force me to remember the MAC addresses of the machines I need to wake.
 * Ideally, let me manipulate (create, delete, update, list) saved configurations using the same utility.
 * Ideally, be open source so I can see what it is doing and know it doesn't do anything nefarious
@@ -38,7 +40,7 @@ None of the existing tools I found satisfied these criteria (even without the la
 
 ## Setup
 
-**Pre-requisites**: Python 3.7 or above. No additional packages required.
+**Prerequisites**: Python 3.7 or above. No additional packages required.
 
 ```bash
 pip3 install eg.wakeonlan
@@ -60,19 +62,28 @@ The reason for this message is that Python does not add _per user_ scripts direc
 ### Wake up a machine given its MAC address XX:XX:XX:XX:XX:XX 
 
 ```bash
-wakeonlan XX:XX:XX:XX:XX:XX [-a BroadcastAddress] [-p Port]
+wakeonlan XX:XX:XX:XX:XX:XX [-i InterfaceName] [-p Port]
 ```
 
-If not specified BroadcastAddress is 255.255.255.255 and Port is 9
+The `-i` option allows you to specify the interface to send wake-on-lan packet from.
+If not specified, it will be sent from _all_ eligible interfaces (those that are active, not loopback and allow broadcasts/multicasts).
+
+You can see all the eligible interface names by invoking `wakeonlan --interfaces`.
+
+Both IPv4 and IPv6 interfaces are supported. Because wake-on-lan might be more reliable over IPv4 (depending on destination machine software),
+`wakeonlan` prefers IPv4 when both are available on the same interface.
+
+The `-p` option allows you to override the destination port (9 if omitted).
 
 ### Save wake up configuration to be used later
 
 ```bash
-wakeonlan --save Name XX:XX:XX:XX:XX:XX [-a BroadcastAddress] [-p Port]
+wakeonlan --save Name XX:XX:XX:XX:XX:XX [-i InterfaceName] [-p Port]
 ```
 
-Name can be anything. The configuration is saved into `$HOME/.wakeonlan` file in JSON format
---save can be abbreviated as -s
+Name can be anything. The configuration is saved into `$HOME/.wakeonlan` file in JSON format.
+
+`--save` can be abbreviated as `-s`.
 
 ### Wake up a machine given saved configuration name
 
@@ -83,10 +94,18 @@ wakeonlan Name
 ### List existing configuration names
 
 ```bash
+wakeonlan --names
+```
+
+`--names` can be abbreviated as `-n`.
+
+If you want to see full details about each name, use:
+
+```bash
 wakeonlan --list
 ```
 
-`--list` can be abbreviated as `-l`
+`--list` can be abbreviated as `-l`.
 
 ### Delete a configuration
 
@@ -94,12 +113,20 @@ wakeonlan --list
 wakeonlan --delete Name
 ```
 
-`--delete` can be abbreviated as `-d`
+`--delete` can be abbreviated as `-d`.
+
+### List available interfaces
+
+```bash
+wakeonlan --interfaces
+```
+
+This will print out list of interface names usable with the `-i` flag.
 
 ### Transferring configurations to another machine
 
 Saved configurations are stored in `$HOME/.wakeonlan` file (`%USERPROFILE%\.wakeonlan` for Windows users).
-Copy this file to another machine into equivalent location to transfer all the configurations.
+Copy this file to another machine into the equivalent location to transfer all the configurations.
 
 ## Set up shell autocomplete
 
@@ -107,7 +134,7 @@ Autocomplete is supported for `bash`, `zsh` and `powershell`.
 
 ### Bash
 
-Add the following to your `~/.bashrc`
+Add the following to your `~/.bashrc`:
 
 ```bash
 source `wakeonlan --autocomplete-source`
@@ -115,7 +142,7 @@ source `wakeonlan --autocomplete-source`
 
 ### Zsh
 
-Add the following to your `~/.zhrc` (make sure it is *after* the call to `compinit`)
+Add the following to your `~/.zshrc` (make sure it is *after* the call to `compinit`):
 
 ```bash
 source `wakeonlan --autocomplete-source`
@@ -131,12 +158,33 @@ source `wakeonlan --autocomplete-source`
   ```ps
   Unblock-File -Path $(wakeonlan --autocomplete-source)
   ```
-2. Find the location of your profile file:
+3. Find the location of your profile file:
   ```ps
   echo $profile
   ```
-3. If it doesn't exist, create it. Then add the following to its content:
+4. If it doesn't exist, create it. Then add the following to its content:
   ```ps
   . $(wakeonlan --autocomplete-source)
   ```
 
+## Backward compatibility
+
+`wakeonlan` fully supports configurations created by older versions and the now-deprecated `-a` switch.
+If you have a configuration with a non-default `-a` setting, it continues to function as before. A default `-a`
+(255.255.255.255) in the saved configuration behaves as if no switches were specified - the wake-on-lan packet 
+is sent on _all_ eligible interfaces, including IPv6 ones. 
+(On older versions it would be sent only on the default IPv4 interface). 
+
+Using the `-a` switch on the command line now produces a deprecation warning but continues to function exactly as before.
+Specifically, using `-a 255.255.255.255` on the command line continues to send a single IPv4 broadcast to that address.
+
+<!-- Links -->
+
+[badge-license]: https://img.shields.io/badge/license-BSD-brightgreen.svg
+[license]: https://opensource.org/licenses/BSD-3-Clause
+[badge-pypi]: https://img.shields.io/pypi/v/eg.wakeonlan
+[wakeonlan-pypi]: https://pypi.org/project/eg.wakeonlan
+[badge-lang]: https://img.shields.io/badge/language-Python-blue.svg
+[python]: https://www.python.org
+
+<!-- End Links -->
