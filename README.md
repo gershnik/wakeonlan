@@ -4,7 +4,7 @@
 [![pypi][badge-pypi]][wakeonlan-pypi]
 [![Language][badge-lang]][python]
 
-Yet another wake-on-lan command line script.
+An advanced wake-on-lan command line script and library.
 
 <!-- TOC depthfrom:2 -->
 
