@@ -47,15 +47,27 @@ None of the existing tools I found satisfied these criteria (even without the la
 pip3 install eg.wakeonlan
 ```
 
-On Windows, if you get a warning like:
-```
-WARNING: The script wakeonlan.exe is installed in 
-'C:\Users\[username]\AppData\Roaming\Python\Python[VER]\Scripts' which is not on PATH.
-```
+> **Tip:**
+> On Windows, if you get a warning like:
+> ```
+> WARNING: The script wakeonlan.exe is installed in 
+> 'C:\Users\[username]\AppData\Roaming\Python\Python[VER]\Scripts' which is not on PATH.
+> ```
+>
+> You can either add this directory to your PATH or run `pip3 install` from Administrator command prompt.
+>
+> The reason for this message is that Python does not add _per user_ scripts directory to PATH on Windows, 
+> only the system-wide one. See [this Python bug](https://bugs.python.org/issue39658)
 
-You can either add this directory to your PATH or run `pip3 install` from Administrator command prompt.
+On macOS, if you use Homebrew, you can also get the command-line tool independent of a specific Python version via:
 
-The reason for this message is that Python does not add _per user_ scripts directory to PATH on Windows, only the system-wide one. See [this Python bug](https://bugs.python.org/issue39658)
+```bash
+brew tap gershnik/repo
+brew install eg-wakeonlan
+```
+> **Note:**
+> Homebrew installs only the command-line tool. If you want to use the library programmatically (import wakeonlan), 
+> use the `pip` approach above.
 
 ## Usage
 
