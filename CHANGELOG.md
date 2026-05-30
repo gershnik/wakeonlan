@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [2.0] - 2026-05-30
+
 Major release. Existing saved configurations and the `wakeonlan NAME` / `wakeonlan MAC` command lines continue to work without changes; some Python API consumers will need to update (see **Changed** below).
 
 ### Added
@@ -58,3 +60,4 @@ Major release. Existing saved configurations and the `wakeonlan NAME` / `wakeonl
 [1.1]: https://github.com/gershnik/wakeonlan/releases/1.1
 [1.2]: https://github.com/gershnik/wakeonlan/releases/1.2
 [1.3]: https://github.com/gershnik/wakeonlan/releases/1.3
+[2.0]: https://github.com/gershnik/wakeonlan/releases/2.0

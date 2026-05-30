@@ -17,7 +17,7 @@ from typing import Any, Dict, Sequence, Tuple, Union, Optional, NamedTuple
 from .util import WakeOnLanError, print_error, print_warning
 from .interfaces import enum_interfaces, InterfaceAddress
 
-VERSION = '1.3'
+VERSION = '2.0'
 
 PROG = 'wakeonlan'
 
