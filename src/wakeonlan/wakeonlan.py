@@ -422,5 +422,5 @@ def main() -> int:
                 print(str(Path(__file__).parent / 'autocomplete.sh'))
         return 0
     except WakeOnLanError as ex:
-        print(ex, file=sys.stderr)
+        print_error(str(ex))
         return 1
