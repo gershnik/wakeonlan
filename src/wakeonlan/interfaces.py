@@ -58,7 +58,7 @@ def _clean_v6_link_local(addr_bytes: bytes) -> bytes:
 _IFF_UP = 0x1
 _IFF_LOOPBACK = 0x8
 
-if sys.platform == 'darwin' or 'bsd' in sys.platform or sys.platform.startswith('haiku') or sys.platform.startswith('hp-ux'):
+if sys.platform == 'darwin' or 'bsd' in sys.platform or sys.platform.startswith('haiku'):
     _IFF_MULTICAST = 0x8000
 elif sys.platform.startswith('sunos'):
     _IFF_MULTICAST = 0x800
@@ -128,6 +128,12 @@ def _enum_unix() -> Dict[str, List[InterfaceAddress]]:
     elif sys.platform.startswith('haiku'):
         # getifaddrs lives in libnetwork on Haiku
         lib_name = ctypes.util.find_library('network') or 'libnetwork.so'
+    elif sys.platform.startswith('aix'):
+        # getifaddrs lives in /usr/lib/libifaddrs.a on AIX 7.3 TL2+,
+        # not in libc; shipped by bos.net.tcp.server_core.
+        lib_name = ctypes.util.find_library('ifaddrs') or 'libifaddrs.a'
+    elif sys.platform.startswith('hp-ux'):
+        raise RuntimeError('HP-UX is not supported')
     else:
         lib_name = ctypes.util.find_library('c')
     libc = ctypes.CDLL(lib_name, use_errno=True)
