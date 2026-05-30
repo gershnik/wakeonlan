@@ -73,7 +73,7 @@ class HostRecord(NamedTuple):
         return ':'.join([f'{x:02X}' for x in self.mac])
 
     def interface_name(self):
-        """Interface name sutiable for display to the user"""
+        """Interface name suitable for display to the user"""
         return self.interface if self.interface is not None else self.address if self.address is not None else '*'
 
 
