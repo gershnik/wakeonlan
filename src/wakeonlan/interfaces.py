@@ -192,8 +192,6 @@ def _enum_unix() -> Dict[str, List[InterfaceAddress]]:
 # --------------------------------------------------------------------------- #
 # Windows: GetAdaptersAddresses
 # --------------------------------------------------------------------------- #
-# NOTE: struct layouts are reasoned against the documented IP_ADAPTER_*_LH
-# definitions; not exercised on Windows in the development environment here.
 
 if sys.platform == 'win32':
     from ctypes import wintypes
