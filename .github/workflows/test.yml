@@ -74,6 +74,7 @@ jobs:
 
   container:
     name: old-${{matrix.python-version}}
+    needs: build-wheel
     runs-on: ubuntu-latest
     container: python:${{matrix.python-version}}-slim
     strategy:
