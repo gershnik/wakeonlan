@@ -23,6 +23,7 @@ Yet another wake-on-lan command line script.
     - [Zsh](#zsh)
     - [Powershell](#powershell)
 - [Backward compatibility](#backward-compatibility)
+- [Programmatic access](#programmatic-access)
 
 <!-- /TOC -->
 
@@ -177,6 +178,29 @@ is sent on _all_ eligible interfaces, including IPv6 ones.
 
 Using the `-a` switch on the command line now produces a deprecation warning but continues to function exactly as before.
 Specifically, using `-a 255.255.255.255` on the command line continues to send a single IPv4 broadcast to that address.
+
+## Programmatic access
+
+```python
+
+import wakeonlan
+
+# wake a given MAC using all the defaults
+wakeonlan.wake(wakeonlan.HostRecord((1,2,3,4,5,6)))
+# or specify some options
+wakeonlan.wake(wakeonlan.HostRecord((1,2,3,4,5,6), interface='eth0', port=9))
+# save a record in user's configuration
+wakeonlan.save_name("my-machine", wakeonlan.HostRecord((1,2,3,4,5,6)))
+# get it back
+rec = wakeonlan.get_name_record("my-machine")
+# get all records
+for name, rec in wakeonlan.get_names().items():
+    do_something(rec)
+# delete a record
+wakeonlan.delete_name("my-machine")
+```
+
+See the sources for more details.
 
 <!-- Links -->
 

@@ -63,9 +63,9 @@ SocketAddress = Union[Tuple[Any, ...], str, Any] #see socket._Address
 class HostRecord(NamedTuple):
     """Information about how to wake up a given host"""
     mac: MacAddress
-    interface: Optional[str]
-    address: Optional[IPAddress]
-    port: Port
+    interface: Optional[str] = None
+    address: Optional[IPAddress] = None
+    port: Port = 9
 
     def mac_str(self):
         """MAC address in a string form"""
