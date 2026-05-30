@@ -65,7 +65,7 @@ class HostRecord(NamedTuple):
     mac: MacAddress
     interface: Optional[str] = None
     address: Optional[IPAddress] = None
-    port: Port = 9
+    port: Port = DEFAULT_PORT
 
     def mac_str(self):
         """MAC address in a string form"""
