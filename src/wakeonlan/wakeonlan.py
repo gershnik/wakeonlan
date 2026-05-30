@@ -416,7 +416,7 @@ def main() -> int:
             for iface in ifaces:
                 print(iface)
         elif args.cmd == AUTOC_SOURCE:
-            if not os.environ.get('PSMODULEPATH') is None:
+            if os.environ.get('PSMODULEPATH') is not None:
                 print(str(Path(__file__).parent / 'autocomplete.ps1'))
             else:
                 print(str(Path(__file__).parent / 'autocomplete.sh'))
