@@ -287,6 +287,8 @@ def _parse_name_record(name: str, name_record: Dict[Any, Any]) -> HostRecord:
         ip = None
     iface = name_record.get('interface')
     if iface is not None:
+        if not isinstance(iface, str) or not iface:
+            raise WakeOnLanError(f'interface in `{name}` entry in {CONFIG_PATH} is malformed')
         ip = None
     port = name_record.get('port', DEFAULT_PORT)
     if not isinstance(port, int) or port < 0 or port > 65535:

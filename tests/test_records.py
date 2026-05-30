@@ -110,6 +110,8 @@ def test_record_with_explicit_port(write_config):
     ({'mac': '01:02:03:04:05:06', 'ip': 'x.y.z'},   'ip malformed'),
     ({'mac': '01:02:03:04:05:06', 'ip': '192.168.1.1.5'}, 'ip too many octets'),
     ([1, 2, 3],                                     'record not a dict'),
+    ({'mac': '01:02:03:04:05:06', 'interface': ''}, 'empty interface'),
+    ({'mac': '01:02:03:04:05:06', 'interface': 7},  'non-string interface'),
 ])
 def test_malformed_record_rejected(write_config, record, reason):
     write_config({'names': {'test': record}})
