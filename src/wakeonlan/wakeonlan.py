@@ -11,6 +11,7 @@ import socket
 import re
 import json
 import shutil
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, Sequence, Tuple, Union, Optional, NamedTuple
 
@@ -42,7 +43,6 @@ DEFAULT_IP6 = 'ff02::1'
 DEFAULT_PORT = 9
 CONFIG_HOME = Path(os.environ.get('WAKEONLAN_HOME', Path.home()))
 CONFIG_PATH = CONFIG_HOME / '.wakeonlan'
-CONFIG_TMP_PATH = CONFIG_HOME /'.wakeonlan.tmp'
 MAC_PATTERN = re.compile(r'[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}')
 IP_PATTERN = re.compile(r'(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')
      
@@ -260,12 +260,21 @@ def _load_config() -> Dict[Any, Any]:
     return {'names':{}}
 
 def _save_config(config: Dict[Any, Any]):
+    tmp_path = None
     try:
-        with open(CONFIG_TMP_PATH, 'wt', encoding='utf-8') as tempfile:
-            json.dump(config, tempfile, indent=2)
-        shutil.move(CONFIG_TMP_PATH, CONFIG_PATH)
+        with tempfile.NamedTemporaryFile(dir=CONFIG_HOME, mode='wt', encoding='utf-8', delete=False) as f:
+            tmp_path = f.name
+            json.dump(config, f, indent=2)
+        os.replace(tmp_path, CONFIG_PATH)
+        tmp_path = None
     except OSError as err:
         raise WakeOnLanError(f'Unable to save: {err.strerror}') from err
+    finally:
+        if tmp_path is not None:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
 
 def _get_names_dict(config: Dict[Any, Any]) -> Dict[Any, Any]:
     names = config.get('names')
