@@ -122,7 +122,7 @@ wakeonlan --delete Name
 wakeonlan --interfaces
 ```
 
-This will print out list of interface names usable with the `-i` flag.
+This will print out a list of interface names usable with the `-i` flag.
 
 ### Transferring configurations to another machine
 
@@ -195,7 +195,7 @@ wakeonlan.save_name("my-machine", wakeonlan.HostRecord((1,2,3,4,5,6)))
 rec = wakeonlan.get_name_record("my-machine")
 # get all records
 for name, rec in wakeonlan.get_names().items():
-    do_something(rec)
+    print(name, rec.mac_str())
 # delete a record
 wakeonlan.delete_name("my-machine")
 ```
