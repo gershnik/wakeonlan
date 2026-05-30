@@ -21,7 +21,7 @@ jobs:
           print('RELEASE_NAME=' + name, file=env)
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Setup Python environment
       run: |
@@ -32,7 +32,7 @@ jobs:
         python3 -m build
 
     - name: Make release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       id: create_release
       with:
         draft: true

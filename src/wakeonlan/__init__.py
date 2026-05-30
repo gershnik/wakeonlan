@@ -5,12 +5,29 @@
 
 """wakeonlan package"""
 
-from .wakeonlan import VERSION as __version__, wake, save_name, get_name_record, get_names, delete_name
+from .wakeonlan import \
+    VERSION as __version__, \
+    wake, \
+    save_name, \
+    get_name_record, \
+    get_names, \
+    delete_name, \
+    MacAddress, \
+    IPAddress, \
+    Port, \
+    HostRecord
+
+from .util import WakeOnLanError
 
 __all__ = [
     'wake',
     'save_name',
     'get_name_record',
     'get_names',
-    'delete_name'
+    'delete_name',
+    'MacAddress',
+    'IPAddress',
+    'Port',
+    'HostRecord',
+    'WakeOnLanError'
 ]

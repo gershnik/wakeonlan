@@ -21,7 +21,7 @@ where = ["src"]
 [project]
 name = "eg.wakeonlan"
 dynamic = ["version"]
-description="Yet another wake-on-lan library"
+description="An advanced wake-on-lan command line script and library"
 readme="README.md"
 authors= [
     { name = 'Eugene Gershnik', email='gershnik@hotmail.com'}
@@ -55,6 +55,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 
     "Typing :: Typed"
 ]
